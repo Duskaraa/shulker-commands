@@ -94,6 +94,7 @@ export interface messages {
   one: string;
   none: string;
   bad: string;
+  missing: string;
 }
 
 export interface defaults {

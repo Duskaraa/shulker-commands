@@ -562,7 +562,10 @@ var context = class {
   }
 };
 
-var show = (p) => p.optional ? `[${p.name}]` : `<${p.name}>`;
+var show = (p) => {
+  const t = `${p.name}: ${p.type === "enum" ? p.enum : p.type}`;
+  return p.optional ? `[${t}]` : `<${t}>`;
+};
 function find(spec, name, sub) {
   for (const c of spec.commands) {
     if (c.name === name || c.aliases?.includes(name))
@@ -574,6 +577,7 @@ function usage(spec, name, sub) {
   const f = find(spec, name, sub);
   if (!f || sub && !f.sub && sub !== "help") return void 0;
   const { cmd, sub: s } = f;
+  if (s && sub && s.inline === false && s.aliases?.length) return usage(spec, s.aliases[0]);
   if (s) return `/${name} ${f.alias && !sub ? "" : s.name + " "}${(s.params ?? []).map(show).join(" ")}`.trim();
   if (sub === "help") return `/${name} help`;
   if (cmd.subs?.length) {
@@ -609,7 +613,8 @@ var messages = {
   max: "{name} must be at most {max}.",
   one: "Select exactly one {name}.",
   none: "No matching targets.",
-  bad: "Invalid value for {name}."
+  bad: "Invalid value for {name}.",
+  missing: "Missing {name}."
 };
 var nope = {};
 var text = {
@@ -689,7 +694,7 @@ function build(p, tree, env) {
       const v = raw[p2.slot];
       if (v === void 0) {
         if (p2.optional) continue;
-        state.err = fill(msg.bad, { name: p2.key });
+        state.err = fill(msg.missing, { name: p2.key });
         return;
       }
       const x = value(p2, v);
